@@ -1,7 +1,7 @@
-import client
+import gui_
 
 def main():
-    app = client.Main()
+    app = gui_.Main()
 
 if __name__ == '__main__':
     main()
