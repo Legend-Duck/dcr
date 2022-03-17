@@ -1,40 +1,52 @@
+from re import match
+
 class Command:
-    msg = self.command.txt.get()
-    self.command.txt.set('')
-    if msg[:8] == '/connect':
-        addr = msg[9:].split(',')
-        try:
-            self.host, self.port = addr
-        except ValueError:
-            msg = f'[Error] unknown arguments: {msg[9:]}'
-        else:
-            self.updater(f'[Connecting] {self.host}, {self.port}', self.command)
-            try:
-                self.client.connect((self.host, int(self.port)))
-            except socket.gaierror:
-                msg = f'[Error] unknown address: {self.host}, {self.port}'
-            except socket.error as e:
-                msg = f'[Error] {e}'
+    def __init__(self, gui, client):
+        self.gui = gui
+        self.client = client
+        self.pattern = r'^/([^ ]+)? *((?<= ).+$)?'
+
+    def update(self, msg):
+        getattr(self.gui, 'update_')(msg, self.gui.command)
+
+    def command(self, msg):
+        msg = match(self.pattern, msg)
+        if msg:
+            if msg[1]:
+                try:
+                    call = getattr(self, msg[1])
+                    call(msg[2]) if msg[2] else call()
+                except AttributeError:
+                    msg = f'unknown command: {msg[1]}'
+                except TypeError:
+                    msg = f'unknown argument(s): {msg[2] or ""}'
+                else:
+                    return
             else:
-                msg = f'[Connected] {self.host}, {self.port}'
-                self.updater(f'Please enter your name.', self.chat)
-                self.receiver()
-    elif msg[:6] == '/close':
-        if self.connected:
-            msg = None
-            self.client.shutdown(socket.SHUT_RDWR)
-            self.client.close()
+                msg = f'did you forget to put command?'
         else:
-            msg = '[Error] server is not connected.'
-    elif msg[:8] == '/rename ':
+            msg = f'did you forget to put \'/\'?'
+        self.update(f'[Error] {msg}')
+
+    def connect(self, addr):
+        try:
+            host, port = addr.split(',')
+        except ValueError:
+            self.update(f'[Error] unknown arguments: {addr}')
+        else:
+            self.client.connect(host, port)
+
+    def close(self):
+        self.client.close()
+
+    def rename(self):
         pass
-    elif msg[:7] == '/active':
+
+    def active(self):
         pass
-    elif msg[:5] == '/user':
+
+    def user(self):
         pass
-    elif msg[:7] == '/server':
+
+    def server(self):
         pass
-    else:
-        msg = f'[Error] unknown command: {msg}'
-    if msg:
-        self.updater(msg, self.command)

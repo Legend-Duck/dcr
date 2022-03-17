@@ -1,41 +1,59 @@
-import socket, threading
+import socket
+from threading import Thread
+from re import match
 
-def handler(func):
+def handle(func):
     def wrapper(*args, **kwargs):
-        threading.Thread(target=func, args=(*args,), kwargs={**kwargs}).start()
+        Thread(target=func, args=(*args,), kwargs={**kwargs}).start()
     return wrapper
+
 class Client:
-    def __init__(self, main_widget, chat_widget, command_widget):
-        self.main = main_widget
-        self.chat = chat_widget
-        self.command = command_widget
+    def __init__(self, gui):
+        self.gui = gui
         self.header = 64
         self.format = 'utf-8'
         self.connected = False
-        self.lock = threading.RLock()
-        self.reseter()
+        self.reset()
 
-    def reseter(self):
+    def reset(self):
         self.host = None
         self.port = None
         self.name = None
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def updater(self, msg, widget):
-        widget.label['text'] = f'{widget.label["text"]}\n{msg}'
+    def update(self, msg):
+        getattr(self.gui, 'update_')(msg, [self.gui.chat, self.gui.command][bool(match(r'^\[.+\] .+$', msg))])
 
-    @handler
-    def on_quit(self):
-        if tkinter.messagebox.askyesno('Quit', 'Do you want to quit?'):
-            if self.connected:
-                self.client.shutdown(socket.SHUT_RDWR)
-                self.client.close()
-                while self.connected:
-                    pass
-            self.main.quit()
+    @handle
+    def close(self, quit=False):
+        if self.connected:
+            self.client.shutdown(socket.SHUT_RDWR)
+            self.client.close()
+        else:
+            if not(quit): self.update('[Error] server is not connected.')
+        if quit:
+            while self.connected:
+                pass
+            self.gui.quit()
 
-    @handler
-    def receiver(self):
+    @handle
+    def connect(self, host, port):
+        self.host, self.port = host, port
+        self.update(f'[Connecting] {self.host}, {self.port}')
+        try:
+            self.client.connect((self.host, int(self.port)))
+        except socket.gaierror:
+            msg = f'[Error] unknown address: {self.host}, {self.port}'
+        except socket.error as e:
+            msg = f'[Error] {e}'
+        else:
+            msg = f'[Connected] {self.host}, {self.port}'
+            self.update(f'Please enter your name.')
+            self.receive()
+        self.update(msg)
+
+    @handle
+    def receive(self):
         self.connected = True
         while True:
             try:
@@ -47,19 +65,17 @@ class Client:
                 print('receive error')
                 break
             else:
-                self.updater(msg, self.chat)
-        self.updater(f'[Disconnected] {self.host}, {self.port}', self.command)
-        self.reseter()
+                self.update(msg)
+        self.update(f'[Disconnected] {self.host}, {self.port}')
+        self.reset()
         self.connected = False
 
-    def sender(self):
-        msg = self.chat.txt.get()
-        self.chat.txt.set('')
+    def send(self, msg):
         if self.name == None and self.connected:
             self.name = msg
-            self.updater(f'Your name: {self.name}', self.chat)
+            self.update(f'Your name: {self.name}')
         else:
-            self.updater(f'{self.name}: {msg}', self.chat)
+            self.update(f'{self.name}: {msg}')
         msg = msg.encode(self.format)
         msg_len = str(len(msg)).encode(self.format)
         msg_len += ' '.encode(self.format) * (self.header - len(msg_len))
@@ -68,6 +84,6 @@ class Client:
                 self.client.send(msg_len)
                 self.client.send(msg)
             except socket.error as e:
-                self.updater(f'[Error] {e}', self.command)
+                self.update(f'[Error] {e}')
         else:
-            self.updater('[Error] server is not connected.', self.command)
+            self.update('[Error] server is not connected.')
