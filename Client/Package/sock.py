@@ -13,6 +13,7 @@ class Client:
         self.header = 64
         self.format = 'utf-8'
         self.connected = False
+        self.pattern = r'^\[.+\] .+$'
         self.reset()
 
     def reset(self):
@@ -22,7 +23,7 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def update(self, msg):
-        getattr(self.gui, 'update_')(msg, [self.gui.chat, self.gui.command][bool(match(r'^\[.+\] .+$', msg))])
+        getattr(self.gui, 'update_')(msg, [self.gui.chat, self.gui.command][bool(match(self.pattern, msg))])
 
     @handle
     def close(self, quit=False):
