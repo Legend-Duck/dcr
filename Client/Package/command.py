@@ -23,7 +23,7 @@ class Command:
                 else:
                     return
             else:
-                msg = f'did you forget to put command?'
+                msg = 'did you forget to put command?'
         else:
             msg = f'did you forget to put \'/\'?'
         self.update(f'[Error] {msg}')
