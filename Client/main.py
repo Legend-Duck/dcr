@@ -2,7 +2,6 @@ from Package import *
 
 class Start:
     def __init__(self, root):
-        self.root = root
         self.gui = gui.Main(self, root)
         self.client = sock.Client(self.gui)
         self.command = command.Command(self.gui, self.client)
