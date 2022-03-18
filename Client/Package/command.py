@@ -15,7 +15,7 @@ class Command:
             if msg[1]:
                 try:
                     call = getattr(self, msg[1])
-                    call(msg[2].strip(' ')) if msg[2] else call()
+                    call(msg[2].replace(' ', '')) if msg[2] else call()
                 except AttributeError:
                     msg = f'unknown command: {msg[1]}'
                 except TypeError:
