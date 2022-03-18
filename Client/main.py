@@ -11,7 +11,7 @@ class Start:
         self.client.send(msg)
 
     def command_(self, msg):
-        self.command.command(msg)
+        self.command.parsing(msg)
 
     def close(self):
         self.client.close(True)

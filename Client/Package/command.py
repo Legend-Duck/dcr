@@ -9,13 +9,13 @@ class Command:
     def update(self, msg):
         getattr(self.gui, 'update_')(msg, self.gui.command)
 
-    def command(self, msg):
+    def parsing(self, msg):
         msg = match(self.pattern, msg)
         if msg:
             if msg[1]:
                 try:
                     call = getattr(self, msg[1])
-                    call(msg[2]) if msg[2] else call()
+                    call(msg[2].strip(' ')) if msg[2] else call()
                 except AttributeError:
                     msg = f'unknown command: {msg[1]}'
                 except TypeError:
