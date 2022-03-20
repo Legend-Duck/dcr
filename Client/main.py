@@ -9,11 +9,12 @@ class Start:
     def send(self, msg):
         self.client.send(msg)
 
-    def command_(self, msg):
-        self.command.parsing(msg)
+    def command_(self, cmd):
+        self.command.command_parse(cmd)
 
     def close(self):
-        self.client.close(True)
+        disconnect = True if self.client.connected else False
+        self.client.close(disconnect=disconnect, quit=True)
 
 def main():
     root = gui.tk.Tk()
