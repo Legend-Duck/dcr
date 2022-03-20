@@ -1,7 +1,7 @@
 import socket
 from . import sys_msg
 from threading import Thread, RLock, Event
-from re import match
+from re import match, compile
 
 def handle(func):
     def wrapper(*args, **kwargs):
@@ -20,7 +20,7 @@ class Server:
         self.listening = False
         self.clst = {}
         self.count = 0
-        self.pattern = r'^\[.+\] .+$'
+        self.update_pattern = compile(r'^\[.+\] .+$')
         self.lock = RLock()
         self.reset()
 
@@ -29,7 +29,7 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def update(self, msg):
-        self.gui.update_(msg, (self.gui.chat, self.gui.command)[bool(match(self.pattern, msg))])
+        self.gui.update_(msg, (self.gui.chat, self.gui.command)[bool(self.update_pattern.match(msg))])
 
     def system(self, option, arg=(), num=0):
         return sys_msg.return_msg(option, arg, num)
