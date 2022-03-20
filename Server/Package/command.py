@@ -53,12 +53,14 @@ class Command:
             var = self.close_pattern.finditer(var)
             error = []
             for i in var:
-                if i.group() == '-l':
+                i = i.group()
+                if i == '-l':
                     no_listen = True
-                elif i.group() == '-d':
+                elif i == '-d':
                     disconnect = True
                 else:
-                    error.append(i.group())
+                    if not(i in error):
+                        error.append(i)
             if error:
                 self.update(self.system(option='uk_arg', arg=' '.join(error)))
                 return
