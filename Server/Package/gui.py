@@ -6,75 +6,63 @@ class Main(tk.Frame):
         super().__init__(root)
         self.main = main
 
-        self.chat = Chat(self, main)
-        self.command = Command(self, main)
+        root_width = 500
+        root_height = 400
 
-        for child in self.winfo_children():
-            child.label.config(justify=tk.LEFT,
-                               anchor=tk.NW,
-                               width=30,
-                            #    height=20,
-                               padx=5,
-                               pady=5,
-                            #    border=2,
-                               relief='groove')
-
-            child.entry.config(width=30,
-                               border=2,
-                               relief='groove')
-
-        self.grid(row=0, column=0)
-        self.chat.grid(row=0, column=0)
-        self.command.grid(row=0, column=1)
+        root_x = int(root.winfo_screenwidth()/2 - root_width/2)
+        root_y = int(root.winfo_screenheight()/2 - root_height/2)
 
         root.title('Duck Chat Room (Server)')
         root.wm_protocol('WM_DELETE_WINDOW', self.on_quit)
+        root.geometry(f'{root_width}x{root_height}+{root_x}+{root_y}')
+
+        self.chat = Child(self, 'Welcome to Duck Chat Room!', 'send', main)
+        self.command = Child(self, 'Type \'/help\' for available command.', 'command_', main)
+
+        self.place(relwidth=1, relheight=1)
+        self.chat.place(relwidth=0.5, relheight=1)
+        self.command.place(relwidth=0.5, relheight=1, relx=0.5)
 
         def quit():
             root.destroy()
 
     def update_(self, msg, widget):
-        widget.label['text'] = f'{widget.label["text"]}\n{msg}'
+        widget.show['state'] = 'normal'
+        widget.show.insert(tk.END, f'\n{msg}')
+        widget.show['state'] = 'disabled'
+        widget.show.see(tk.END)
 
     def on_quit(self):
         if messagebox.askyesno('Quit', 'Do you want to quit?'):
             self.main.close()
 
-class Chat(tk.Frame):
-    def __init__(self, main_frame, main):
+class Child(tk.Frame):
+    def __init__(self, main_frame, text, attr, main):
         super().__init__(main_frame)
+        self.attr = attr
         self.main = main
+        self.font = tk.Message(self).cget('font')
 
-        self.label = tk.Message(master=self, text='Welcome to Duck Chat Room!')
-        self.label.grid(row=0, column=0)
+        self.show = tk.Text(master=self, wrap=tk.WORD, font=self.font)
+        self.show.place(relwidth=1, relheight=0.5)
+        self.show.insert('1.0', text)
+        self.show['state'] = 'disabled'
 
-        self.txt = tk.StringVar()
-        self.entry = tk.Entry(master=self, textvariable=self.txt)
-        self.entry.grid(row=1, column=0)
-        self.entry.bind('<Return>', self.enter)
-
-    def enter(self, _):
-        txt = self.txt.get()
-        if txt:
-            self.main.send(txt)
-            self.txt.set('')
-
-class Command(tk.Frame):
-    def __init__(self, main_frame, main):
-        super().__init__(main_frame)
-        self.main = main
-
-        self.label = tk.Label(master=self, text='Type \'/help\' for available commands.',)
-        self.label.grid(row=0, column=0)
-
-        self.txt = tk.StringVar()
-        self.entry = tk.Entry(master=self, textvariable=self.txt)
-        self.entry.grid(row=1, column=0)
+        self.entry = tk.Text(master=self, wrap=tk.WORD, font=self.font)
+        self.entry.place(relwidth=1, relheight=0.5, rely=0.5)
+        self.entry.bind('<Shift-Return>', self.new_line)
         self.entry.bind('<Return>', self.enter)
         self.entry.focus()
 
+        for child in self.winfo_children():
+            child.config(bd=2, relief='groove')
+
+    def new_line(self, _):
+        self.entry.insert(self.entry.index('insert'), '')
+
     def enter(self, _):
-        txt = self.txt.get()
+        txt = self.entry.get('1.0', tk.END+'-1c')
         if txt:
-            self.main.command_(txt)
-            self.txt.set('')
+            getattr(self.main, self.attr)(txt)
+            self.entry.delete('1.0', tk.END)
+        return 'break'
