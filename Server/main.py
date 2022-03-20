@@ -9,11 +9,16 @@ class Start:
     def send(self, msg):
         self.server.send(msg)
 
-    def command_(self, msg):
-        self.command.parsing(msg)
+    def command_(self, cmd):
+        self.command.command_parse(cmd)
 
     def close(self):
-        self.server.close(no_listen=True, disconnect=True, quit=True)
+        lst = []
+        if self.server.listening:
+            lst.append(True)
+        if self.server.count:
+            lst.append(True)
+        self.server.close(*lst, quit=True)
 
 def main():
     root = gui.tk.Tk()

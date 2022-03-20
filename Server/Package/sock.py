@@ -1,4 +1,5 @@
 import socket
+from . import sys_msg
 from threading import Thread, RLock, Event
 from re import match
 
@@ -28,37 +29,31 @@ class Server:
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def update(self, msg):
-        getattr(self.gui, 'update_')(msg, (self.gui.chat, self.gui.command)[bool(match(self.pattern, msg))])
+        self.gui.update_(msg, (self.gui.chat, self.gui.command)[bool(match(self.pattern, msg))])
+
+    def system(self, option, arg=(), num=0):
+        return sys_msg.return_msg(option, arg, num)
 
     @handle
     def close(self, no_listen=False, disconnect=False, quit=False):
-        msg = []
         if no_listen:
-            if self.listening:
-                self.event.set()
-                try:
-                    socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((self.host, self.port))
-                except socket.error:
-                    pass
-                self.server.close()
-                self.reset()
-            else:
-                msg.append(f'server is not opening.')
+            self.event.set()
+            try:
+                socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((self.host, self.port))
+            except socket.error:
+                pass
+            while self.listening:
+                pass
+            self.server.close()
+            self.reset()
         if disconnect:
-            if self.clst:
-                for i in iter(self.clst):
-                    i.shutdown(socket.SHUT_RDWR)
-                    i.close()
-            else:
-                msg.append(f'no client is connecting.')
+            for i in iter(self.clst):
+                i.shutdown(socket.SHUT_RDWR)
+                i.close()
         if quit:
             while self.listening or self.count:
                 pass
             self.gui.quit()
-            return
-        if msg:
-            for i in iter(msg):
-                self.update(f'[Error] {i}')
 
     @handle
     def listen(self):
@@ -68,7 +63,7 @@ class Server:
             self.server.bind((self.host, self.port))
             self.server.listen()
         except socket.error as e:
-            self.update(f'[Error] {e}')
+            self.update(self.system(option='uk', arg=e))
         else:
             while True:
                 try:
@@ -80,10 +75,10 @@ class Server:
                     if self.event.is_set():
                         break
                     else:
-                        self.receive(con, addr)
+                        self.update(f'[Connected] {addr[0]}, {addr[1]}')
                         self.clst[con] = [addr]
                         self.count += 1
-                        self.update(f'[Connected] {addr[0]}, {addr[1]}')
+                        self.receive(con, addr)
             self.update(f'[Closed] {self.host}, {self.port}')
         self.listening = False
 
@@ -130,10 +125,14 @@ class Server:
     def send(self, msg):
         msg = f'{self.name}: {msg}'
         self.update(msg)
-        if self.count:
-            self.announce(msg)
+        if not(self.listening):
+            msg = self.system(option='not_op')
+        elif not(self.count):
+            msg = self.system(option='no_clt')
         else:
-            self.update('[Error] no client is connecting.')
+            self.announce(msg)
+            return
+        self.update(msg)
 
     def announce(self, msg=None, con=None, rename=None):
         txt = msg or rename

@@ -1,43 +1,56 @@
+from . import sys_msg
 from re import match, finditer, compile
 
 class Command:
     def __init__(self, gui, server):
         self.gui = gui
         self.server = server
-        self.parsing_pattern = compile(r'^/([^ ]+)? *((?<= ).+$)?')
-        self.close_pattern = compile(r'-[^-]+')
+        self.command_pattern = compile(r'^/([^ ]+)? *((?<= ).+$)?')
+        self.dash_pattern = compile(r'-[^-]+')
+        self.close_pattern = compile(r'-[^-]+') # later replaced by dash_pattern
 
     def update(self, msg):
-        getattr(self.gui, 'update_')(msg, self.gui.command)
+        self.gui.update_(msg, self.gui.command)
 
-    def parsing(self, msg):
-        msg = self.parsing_pattern.match(msg)
-        if msg:
-            if msg[1]:
+    def system(self, option, arg=(), num=0):
+        return sys_msg.return_msg(option, arg, num)
+
+    def command_parse(self, cmd):
+        cmd = self.command_pattern.match(cmd)
+        if cmd:
+            if cmd[1]:
                 try:
-                    call = getattr(self, msg[1])
-                    call(msg[2].replace(' ', '')) if msg[2] else call()
+                    call = getattr(self, cmd[1])
+                    call(cmd[2].replace(' ', '')) if cmd[2] else call()
                 except AttributeError:
-                    msg = f'unknown command: {msg[1]}'
-                except TypeError as e:
-                    print(e)
-                    msg = f'unknown argument(s): {msg[2] or ""}'
+                    cmd = self.system(option='uk_cmd', arg=cmd[1])
+                except TypeError:
+                    cmd = self.system(option='uk_arg', arg=cmd[2] or '')
                 else:
                     return
             else:
-                msg = 'did you forget to put command?'
+                cmd = self.system(option='no_cmd')
         else:
-            msg = f'did you forget to put \'/\'?'
-        self.update(f'[Error] {msg}')
+            cmd = self.system(option='no_/')
+        self.update(cmd)
+
+    def dash_parse(self, arg):
+        arg = self.dash_pattern.finditer(arg)
+
+    def help(self):
+        pass
 
     def open(self):
-        self.server.listen()
+        if self.server.listening:
+            self.update(self.system(option='already_op'))
+        else:
+            self.server.listen()
 
     def close(self, var=''):
+        no_listen = False
+        disconnect = False
         if match('^-', var):
             var = self.close_pattern.finditer(var)
-            no_listen = False
-            disconnect = False
             error = []
             for i in var:
                 if i.group() == '-l':
@@ -45,15 +58,24 @@ class Command:
                 elif i.group() == '-d':
                     disconnect = True
                 else:
-                    error.append(i)
+                    error.append(i.group())
             if error:
-                self.update(f'[Error] unknown argument(s): {" ".join(error)}')
-            else:
-                self.server.close(no_listen=no_listen, disconnect=disconnect)
+                self.update(self.system(option='uk_arg', arg=' '.join(error)))
+                return
         elif var:
-            self.update(f'[Error] unknown argument(s): {var}')
+            self.update(self.system(option='uk_arg', arg=var))
+            return
         else:
-            self.server.close(no_listen=True)
+            no_listen = True
+        msg = []
+        if no_listen and not(self.server.listening):
+            msg.append(self.system(option='not_op'))
+        if disconnect and not(self.server.count):
+            msg.append(self.system(option='no_clt'))
+        if msg:
+            self.update('\n'.join(msg))
+        else:
+            self.server.close(no_listen=no_listen, disconnect=disconnect)
 
     def name(self, client):
         addr = None
@@ -61,7 +83,7 @@ class Command:
             if len(i) == 2 and client == i[1]:
                 addr = i[1]
                 break
-        msg = f'[Name] ({client}) {addr[0]}, {addr[1]}' if addr else f'[Error] {client} is not exist.'
+        msg = f'[Name] ({client}) {addr[0]}, {addr[1]}' if addr else self.system(option='no_nm', arg=client)
         self.update(msg)
 
     def active(self):
