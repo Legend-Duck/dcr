@@ -1,6 +1,7 @@
 import socket
+from . import sys_msg
 from threading import Thread
-from re import match
+from re import match, compile
 
 def handle(func):
     def wrapper(*args, **kwargs):
@@ -13,7 +14,7 @@ class Client:
         self.header = 64
         self.format = 'utf-8'
         self.connected = False
-        self.pattern = r'^\[.+\] .+$'
+        self.update_pattern = compile(r'^\[.+\] .+$')
         self.reset()
 
     def reset(self):
@@ -23,15 +24,16 @@ class Client:
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def update(self, msg):
-        getattr(self.gui, 'update_')(msg, [self.gui.chat, self.gui.command][bool(match(self.pattern, msg))])
+        self.gui.update_(msg, (self.gui.chat, self.gui.command)[bool(self.update_pattern.match(msg))])
+
+    def system(self, option, arg=(), num=0):
+        return sys_msg.return_msg(option, arg, num)
 
     @handle
-    def close(self, quit=False):
-        if self.connected:
+    def close(self, disconnect=False, quit=False):
+        if disconnect:
             self.client.shutdown(socket.SHUT_RDWR)
             self.client.close()
-        else:
-            if not(quit): self.update('[Error] server is not connected.')
         if quit:
             while self.connected:
                 pass
@@ -42,20 +44,20 @@ class Client:
         self.host, self.port = host, port
         self.update(f'[Connecting] {self.host}, {self.port}')
         try:
-            self.client.connect((self.host, int(self.port)))
+            self.client.connect((self.host, self.port))
         except socket.gaierror:
-            msg = f'[Error] unknown address: {self.host}, {self.port}'
+            msg = self.system(option='uk_addr', arg=(self.host, self.port))
         except socket.error as e:
-            msg = f'[Error] {e}'
+            msg = self.system(option='uk', arg=e)
         else:
             msg = f'[Connected] {self.host}, {self.port}'
-            self.update(f'Please enter your name.')
+            self.connected = True
             self.receive()
+            self.update(f'Please enter your name.')
         self.update(msg)
 
     @handle
     def receive(self):
-        self.connected = True
         while True:
             try:
                 msg_len = self.client.recv(self.header).decode(self.format)
@@ -77,14 +79,14 @@ class Client:
             self.update(f'Your name: {self.name}')
         else:
             self.update(f'{self.name}: {msg}')
-        msg = msg.encode(self.format)
-        msg_len = str(len(msg)).encode(self.format)
-        msg_len += ' '.encode(self.format) * (self.header - len(msg_len))
         if self.connected:
+            msg = msg.encode(self.format)
+            msg_len = str(len(msg)).encode(self.format)
+            msg_len += ' '.encode(self.format) * (self.header - len(msg_len))
             try:
                 self.client.send(msg_len)
                 self.client.send(msg)
             except socket.error as e:
-                self.update(f'[Error] {e}')
+                self.update(self.system(option='uk', arg=e))
         else:
-            self.update('[Error] server is not connected.')
+            self.update(self.system(option='not_con'))
