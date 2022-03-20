@@ -76,7 +76,7 @@ class Client:
     def send(self, msg):
         if self.name == None and self.connected:
             self.name = msg
-            self.update(f'Your name: {self.name}')
+            self.update(f'Your name is {self.name}')
         else:
             self.update(f'{self.name}: {msg}')
         if self.connected:
