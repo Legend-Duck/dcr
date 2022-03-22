@@ -4,8 +4,6 @@
 
 - sock.py Security (HTTPS / SSL / TSL)
 
-- gui.py (Child) reformat
-
 - gui.py font color, size
 
 - sock.py remove test code after done
@@ -16,13 +14,15 @@
 
 - sock.py show rename msg locally
 
-- command.py updater (help, etc.)
+- command.py update
 
 ## Server
 
 - sock.py rename msg -> signal
 
-- command.py update (help, client time, etc.)
+- sock.py msg -> (sender, msg)
+
+- command.py update (client time, etc.)
 
 ## Note
 
