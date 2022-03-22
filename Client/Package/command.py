@@ -41,7 +41,7 @@ class Command:
 
     def connect(self, addr):
         if self.client.connected:
-            msg = self.system(option='already_con')
+            msg = self.system(option='alrdy_con')
         else:
             try:
                 host, port = addr.split(',')

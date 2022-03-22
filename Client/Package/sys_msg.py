@@ -1,6 +1,6 @@
 error_msg = {
     'not_con': 'not connected to a server',
-    'already_con': 'already connecting to a server',
+    'alrdy_con': 'already connecting to a server',
     'no_nm': '%s is not exist.',
     'no_/': 'did you foget to put \'/\'?',
     'no_cmd': 'did you forget to put command?',
