@@ -42,7 +42,7 @@ class Command:
 
     def open(self):
         if self.server.listening:
-            self.update(self.system(option='already_op'))
+            self.update(self.system(option='alrdy_op'))
         else:
             self.server.listen()
 

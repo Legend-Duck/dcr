@@ -1,6 +1,6 @@
 error_msg = {
     'not_op': 'server is not opening.',
-    'already_op': 'server is already running.',
+    'alrdy_op': 'server is already running.',
     'no_clt': 'no client is connecting.',
     'no_nm': '%s is not exist.',
     'no_/': 'did you foget to put \'/\'?',
