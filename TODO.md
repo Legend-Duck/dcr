@@ -8,8 +8,6 @@
 
 - gui.py (Child) reformat
 
-- sys_msg.py 'already' -> 'alrdy'
-
 - sock.py remove test code after done
 
 - pyupdater, pyinstaller
