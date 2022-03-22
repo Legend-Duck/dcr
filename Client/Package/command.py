@@ -37,7 +37,7 @@ class Command:
         arg = self.dash_pattern.finditer(arg)
 
     def help(self):
-        pass
+        self.gui.help.display()
 
     def connect(self, addr):
         if self.client.connected:
