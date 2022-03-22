@@ -27,10 +27,10 @@ class Main(tk.Frame):
             root.destroy()
 
     def update_(self, msg, widget):
-        widget.show['state'] = 'normal'
-        widget.show.insert(tk.END, f'\n{msg}')
-        widget.show['state'] = 'disabled'
-        widget.show.see(tk.END)
+        widget.child['show']['state'] = 'normal'
+        widget.child['show'].insert(tk.END, f'\n{msg}')
+        widget.child['show']['state'] = 'disabled'
+        widget.child['show'].see(tk.END)
 
     def on_quit(self):
         if messagebox.askyesno('Quit', 'Do you want to quit?'):
@@ -42,27 +42,26 @@ class Child(tk.Frame):
         self.attr = attr
         self.main = main
         self.font = tk.Message(self).cget('font')
+        self.child = {}
 
-        self.show = tk.Text(master=self, wrap=tk.WORD, font=self.font)
-        self.show.place(relwidth=1, relheight=0.5)
-        self.show.insert('1.0', text)
-        self.show['state'] = 'disabled'
+        for key in ('show', 'entry'):
+            self.child[key] = tk.Text(master=self, wrap=tk.WORD, font=self.font, bd=2, relief='groove')
 
-        self.entry = tk.Text(master=self, wrap=tk.WORD, font=self.font)
-        self.entry.place(relwidth=1, relheight=0.5, rely=0.5)
-        self.entry.bind('<Shift-Return>', self.new_line)
-        self.entry.bind('<Return>', self.enter)
-        self.entry.focus()
+        self.child['show'].place(relwidth=1, relheight=0.5)
+        self.child['show'].insert('1.0', text)
+        self.child['show']['state'] = 'disabled'
 
-        for child in self.winfo_children():
-            child.config(bd=2, relief='groove')
+        self.child['entry'].place(relwidth=1, relheight=0.5, rely=0.5)
+        self.child['entry'].bind('<Shift-Return>', self.new_line)
+        self.child['entry'].bind('<Return>', self.enter)
+        self.child['entry'].focus()
 
     def new_line(self, _):
-        self.entry.insert(self.entry.index('insert'), '')
+        self.child['entry'].insert(self.child['entry'].index('insert'), '')
 
     def enter(self, _):
-        txt = self.entry.get('1.0', tk.END+'-1c')
+        txt = self.child['entry'].get('1.0', tk.END+'-1c')
         if txt:
             getattr(self.main, self.attr)(txt)
-            self.entry.delete('1.0', tk.END)
+            self.child['entry'].delete('1.0', tk.END)
         return 'break'
