@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
-from .sys_msg import return_help
+from tkinter.scrolledtext import ScrolledText
+from .sys_msg import return_msg, return_help
 
 class Main(tk.Frame):
     def __init__(self, main, root):
@@ -15,12 +16,12 @@ class Main(tk.Frame):
         root_y = int(root.winfo_screenheight()/2 - root_height/2)
 
         root.title('Duck Chat Room')
-        root.wm_protocol('WM_DELETE_WINDOW', self.on_quit)
+        root.protocol('WM_DELETE_WINDOW', self.on_quit)
         root.geometry(f'{root_width}x{root_height}+{root_x}+{root_y}')
 
         self.chat = Child(self, 'Welcome to Duck Chat Room!', 'send', main, self.font)
         self.command = Child(self, 'Type \'/help\' for available command.', 'command_', main, self.font)
-        self.help = Help(root, self.font)
+        self.window = Window(root, self.font)
 
         self.place(relheight=1, relwidth=1)
         self.chat.place(relheight=1, relwidth=0.5)
@@ -47,7 +48,7 @@ class Child(tk.Frame):
         self.child = {}
 
         for key in ('show', 'entry'):
-            self.child[key] = tk.Text(master=self, wrap=tk.WORD, font=font, bd=2, relief=tk.GROOVE)
+            self.child[key] = ScrolledText(master=self, wrap=tk.WORD, font=font, bd=2, relief=tk.GROOVE)
 
         self.child['show'].place(relheight=0.5, relwidth=1)
         self.child['show'].insert('1.0', text)
@@ -68,21 +69,41 @@ class Child(tk.Frame):
             self.child['entry'].delete('1.0', tk.END)
         return 'break'
 
-class Help(tk.Toplevel):
+class Window:
     def __init__(self, root, font):
         self.root = root
         self.font = font
-        self.help = return_help()
-        self.height = 150
-        self.width = 300
+        self.name = {
+            'show': return_msg(option='nm', num=1),
+            'width': 100,
+            'height': 100,
+        }
+        self.help = {
+            'show': return_help(),
+            'width': 300,
+            'height': 150,
+        }
 
-    def display(self):
-        super().__init__(self.root)
-        self.x = int(self.root.winfo_x() + self.root.winfo_width()/2 - self.width/2)
-        self.y = int(self.root.winfo_y() + self.root.winfo_height()/2 - self.height/2)
-        self.geometry(f'{self.width}x{self.height}+{self.x}+{self.y}')
-        self.title('Command')
-        self.show = tk.Text(master=self, wrap=tk.WORD, font=self.font, padx=10, pady=10)
-        self.show.insert('1.0', self.help)
-        self.show['state'] = tk.DISABLED
-        self.show.pack()
+    def window_build(self, width, height, title):
+        window = tk.Toplevel()
+        x = int(self.root.winfo_x() + self.root.winfo_width()/2 - width/2)
+        y = int(self.root.winfo_y() + self.root.winfo_height()/2 - height/2)
+        window.geometry(f'{width}x{height}+{x}+{y}')
+        window.title(title)
+        window.protocol('WM_DELETE_WINDOW', lambda: self.close(window))
+        return window
+
+    def close(self, window):
+        window.destroy()
+
+    def name_enter(self):
+        window = self.window_build(self.name['width'], self.name['height'], 'Name')
+        show = tk.Entry(master=window)
+        show.pack()
+
+    def help_show(self):
+        window = self.window_build(self.help['width'], self.help['height'], 'Command')
+        show = ScrolledText(master=window, wrap=tk.WORD, font=self.font, padx=10, pady=10)
+        show.insert('1.0', self.help['show'])
+        show['state'] = tk.DISABLED
+        show.place(relheight=1, relwidth=1)
