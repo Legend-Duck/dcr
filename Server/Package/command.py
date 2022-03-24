@@ -38,11 +38,11 @@ class Command:
         arg = self.dash_pattern.finditer(arg)
 
     def help(self):
-        pass
+        self.gui.window.help_show()
 
     def open(self):
         if self.server.listening:
-            self.update(self.system(option='alrdy_op'))
+            self.update(self.system(option='op_true'))
         else:
             self.server.listen()
 
@@ -71,7 +71,7 @@ class Command:
             no_listen = True
         msg = []
         if no_listen and not(self.server.listening):
-            msg.append(self.system(option='not_op'))
+            msg.append(self.system(option='op_false'))
         if disconnect and not(self.server.count):
             msg.append(self.system(option='no_clt'))
         if msg:
@@ -85,8 +85,8 @@ class Command:
             if len(i) == 2 and client == i[1]:
                 addr = i[1]
                 break
-        msg = f'[Name] ({client}) {addr[0]}, {addr[1]}' if addr else self.system(option='no_nm', arg=client)
+        msg = self.system(option='nm_info', arg=(client, addr[0], addr[1]), num=1) if addr else self.system(option='no_nm', arg=client)
         self.update(msg)
 
     def active(self):
-        self.update(f'[Active] {self.server.count}')
+        self.update(self.system(option='con_num', arg=(self.server.count)))

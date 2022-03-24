@@ -1,5 +1,5 @@
 import socket
-from . import sys_msg
+from .sys_msg import return_msg
 from threading import Thread
 from re import match, compile
 
@@ -27,7 +27,7 @@ class Client:
         self.gui.update_(msg, (self.gui.chat, self.gui.command)[bool(self.update_pattern.match(msg))])
 
     def system(self, option, arg=(), num=0):
-        return sys_msg.return_msg(option, arg, num)
+        return return_msg(option, arg, num)
 
     @handle
     def close(self, disconnect=False, quit=False):
@@ -42,7 +42,7 @@ class Client:
     @handle
     def connect(self, host, port):
         self.host, self.port = host, port
-        self.update(f'[Connecting] {self.host}, {self.port}')
+        self.update(self.system(option='con_ing', arg=(self.host, self.port), num=1))
         try:
             self.client.connect((self.host, self.port))
         except socket.gaierror:
@@ -69,7 +69,7 @@ class Client:
                 break
             else:
                 self.update(msg)
-        self.update(f'[Disconnected] {self.host}, {self.port}')
+        self.update(self.system(option='con_false', arg=(self.host, self.port), num=1))
         self.reset()
         self.connected = False
 
@@ -89,4 +89,4 @@ class Client:
             except socket.error as e:
                 self.update(self.system(option='uk', arg=e))
         else:
-            self.update(self.system(option='not_con'))
+            self.update(self.system(option='con_false'))

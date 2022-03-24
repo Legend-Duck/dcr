@@ -58,7 +58,7 @@ class Server:
     @handle
     def listen(self):
         self.listening = True
-        self.update(f'[Listening] {self.host}, {self.port}')
+        self.update(self.system(option='op_true', arg=(self.host, self.port), num=1))
         try:
             self.server.bind((self.host, self.port))
             self.server.listen()
@@ -75,11 +75,11 @@ class Server:
                     if self.event.is_set():
                         break
                     else:
-                        self.update(f'[Connected] {addr[0]}, {addr[1]}')
+                        self.update(self.system(option='con_true', arg=(addr[0], addr[1]), num=1))
                         self.clst[con] = [addr]
                         self.count += 1
                         self.receive(con, addr)
-            self.update(f'[Closed] {self.host}, {self.port}')
+            self.update(self.system(option='op_false', arg=(self.host, self.port), num=1))
         self.listening = False
 
     @handle
@@ -118,7 +118,7 @@ class Server:
             msg = f'{name} has left the chat.'
             self.announce(msg)
             self.update(msg)
-        self.update(f'[Disconnected] {addr[0]}, {addr[1]}')
+        self.update(self.system(option='con_false', arg=(addr[0], addr[1]), num=1))
         with self.lock:
             self.count -= 1
 
@@ -126,7 +126,7 @@ class Server:
         msg = f'{self.name}: {msg}'
         self.update(msg)
         if not(self.listening):
-            msg = self.system(option='not_op')
+            msg = self.system(option='op_false')
         elif not(self.count):
             msg = self.system(option='no_clt')
         else:

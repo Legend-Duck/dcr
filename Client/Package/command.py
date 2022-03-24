@@ -37,11 +37,11 @@ class Command:
         arg = self.dash_pattern.finditer(arg)
 
     def help(self):
-        self.gui.help.display()
+        self.gui.window.help_show()
 
     def connect(self, addr):
         if self.client.connected:
-            msg = self.system(option='alrdy_con')
+            msg = self.system(option='con_true')
         else:
             try:
                 host, port = addr.split(',')
@@ -57,7 +57,7 @@ class Command:
         if self.client.connected:
             self.client.close(disconnect=True)
         else:
-            self.update(self.system(option='not_con'))
+            self.update(self.system(option='con_false'))
 
     def rename(self):
         pass
