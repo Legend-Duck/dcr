@@ -89,4 +89,4 @@ class Command:
         self.update(msg)
 
     def active(self):
-        self.update(self.system(option='con_num', arg=(self.server.count)))
+        self.update(self.system(option='con_num', arg=(self.server.count), num=1))
