@@ -1,5 +1,4 @@
 # gitignore
 
-_test/
+.env/
 **/__pycache__/
-**/tempCodeRunnerFile.*
