@@ -1,4 +1,4 @@
-from Package import *
+from package import *
 
 class Start:
     def __init__(self, root):
