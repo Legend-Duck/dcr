@@ -1,3 +1,3 @@
-# About
+# Duck Chat Room
 
-Duck Chat Room is a small application for messaging over TCP Socket written in Python 3.10.2.
+Application for messaging over TCP socket.
